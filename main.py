@@ -33,8 +33,16 @@ def get_product_info(link):
               f"Цена - {price}\n"
               f"Отзывы - {reviews}\n"
               f"Описание - {description}\n")
-    else:
-        print(response.status_code)
+    elif response.status_code == 404:
+        print(f"{response.status_code} Not found")
+    elif response.status_code == 503:
+        print(f"{response.status_code} Service Unavailable")
+    elif response.status_code == 403:
+        print(f"{response.status_code} Forbidden")
+    elif response.status_code == 408:
+        print(f"{response.status_code} Request timeout")
+    elif response.status_code == 502:
+        print(f"{response.status_code} Bad Gateway")
 
 
 def get_product_links(data):
