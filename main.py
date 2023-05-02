@@ -2,11 +2,11 @@ import requests
 import urllib.parse
 from bs4 import BeautifulSoup
 from data import headers, cookies, url as main_url
+from manticore import push
 
 
 def get_product_info(link):
-    encoded_link = urllib.parse.quote(link).replace("%3F", "?").replace("%3D", "=").replace("%26", "&").replace('%3A', ':')
-    response = requests.get(url=encoded_link, headers=headers, cookies=cookies)
+    response = requests.get(url=link, headers=headers, cookies=cookies)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, "lxml")
         try:
@@ -28,29 +28,14 @@ def get_product_info(link):
             description = " ".join([i.text for i in description])
         except AttributeError:
             description = "Описание отсутствует"
-        print(f"Ссылка - {encoded_link}\n"
-              f"Заголовок - {title}\n"
-              f"Цена - {price}\n"
-              f"Отзывы - {reviews}\n"
-              f"Описание - {description}\n")
-    elif response.status_code == 404:
-        print(f"{response.status_code} Not found")
-    elif response.status_code == 503:
-        print(f"{response.status_code} Service Unavailable")
-    elif response.status_code == 403:
-        print(f"{response.status_code} Forbidden")
-    elif response.status_code == 408:
-        print(f"{response.status_code} Request timeout")
-    elif response.status_code == 502:
-        print(f"{response.status_code} Bad Gateway")
+        push(title, price, reviews, description)
 
 
 def get_product_links(data):
     url, pages = data
     for page in range(pages):
         url = f'{url}{page}'
-        encoded_url = urllib.parse.quote(url).replace("%3F", "?").replace("%3D", "=").replace("%26", "&").replace('%3A', ':')
-        response = requests.get(url=encoded_url, headers=headers, cookies=cookies)
+        response = requests.get(url=url, headers=headers, cookies=cookies)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "lxml")
 
