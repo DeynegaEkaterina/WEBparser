@@ -1,11 +1,10 @@
 import requests
-import urllib.parse
 from bs4 import BeautifulSoup
 from data import headers, cookies, url as main_url
-from manticore import push
+from manticore import push, write_error
 
 
-def get_product_info(link):
+def get_product_info(link: str, attempt: int = 1):
     response = requests.get(url=link, headers=headers, cookies=cookies)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, "lxml")
@@ -28,10 +27,29 @@ def get_product_info(link):
             description = " ".join([i.text for i in description])
         except AttributeError:
             description = "Описание отсутствует"
-        push(title, price, reviews, description)
+        data = {
+            "title": title, 
+            "price": price, 
+            "reviews": reviews, 
+            "description": description
+        }
+        push(data)
+    elif response.status_code == 404:
+        write_error({
+            "url": link,
+            "status": response.status_code
+        })
+    elif response.status_code >= 500:
+        if attempt > 1:
+            write_error({
+                "url": link,
+                "status": response.status_code
+            })
+        else:
+            get_product_info(link, 2)
 
 
-def get_product_links(data):
+def get_product_links(data, attempt: int = 1):
     url, pages = data
     for page in range(pages):
         url = f'{url}{page}'
@@ -51,6 +69,17 @@ def get_product_links(data):
                 print(ae)
 
             print(f"Обработал страницу №{page}")
-        else:
-            print(response.status_code)
+        elif response.status_code == 404:
+            write_error({
+                "url": link,
+                "status": response.status_code
+            })
+        elif response.status_code >= 500:
+            if attempt > 1:
+                write_error({
+                    "url": link,
+                    "status": response.status_code
+                })
+            else:
+                get_product_links(link, 2)
 
